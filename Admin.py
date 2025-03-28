@@ -1,5 +1,5 @@
 
-# Admin class 
+# Admin classS 
 class Admin:
     """
     Represents an administrative user who manages hotel operations.
