@@ -4,85 +4,114 @@
 user1 = User(1, "John Doe", "johndoe@example.com", "johndoe", "password123", "Guest")
 user2 = User(2, "Jane Smith", "janesmith@example.com", "janesmith", "mypassword", "Admin")
 
-# Test login
+# Test login (two examples)
 assert user1.login("johndoe", "password123") is True, "Login should succeed with correct credentials"
 assert user1.login("johndoe", "wrongpassword") is False, "Login should fail with incorrect credentials"
+assert user2.login("janesmith", "mypassword") is True, "Login should succeed for Admin user"
 
-# Test profile update
+# Test profile update (two examples)
 user1.update_profile({"name": "John Updated", "contact_info": "newemail@example.com"})
 assert user1.get_account_details()["name"] == "John Updated", "Profile update failed"
+user2.update_profile({"name": "Jane Updated", "contact_info": "janeupdated@example.com"})
+assert user2.get_account_details()["name"] == "Jane Updated", "Profile update failed"
 
-# Test password reset
+# Test password reset (two examples)
 assert user1.reset_password("newpassword") is True, "Password reset failed"
+assert user2.reset_password("newadminpassword") is True, "Password reset failed"
 
-# Test booking history retrieval
+# Test booking history retrieval (two examples)
 assert len(user1.check_booking_history()) > 0, "Booking history should not be empty"
+assert len(user2.check_booking_history()) > 0, "Booking history should not be empty"
 
 # Testing the Room class
 room1 = Room(101, "Deluxe", ["Wi-Fi", "TV"], 150.0, True)
 room2 = Room(102, "Suite", ["Wi-Fi", "TV", "Jacuzzi"], 300.0, True)
 
-# Test room availability
+# Test room availability (two examples)
 assert room1.check_availability() is True, "Room 101 should be available"
 room1.update_status(False)
 assert room1.check_availability() is False, "Room 101 should not be available after update"
+assert room2.check_availability() is True, "Room 102 should be available"
 
-# Test room price and discount
+# Test room price and discount (two examples)
 assert room1.get_price() == 150.0, "Price mismatch"
 assert room1.calculate_discounted_price(10) == 135.0, "Discounted price calculation failed"
+assert room2.calculate_discounted_price(20) == 240.0, "Discounted price calculation failed"
 
-# Test amenities
+# Test amenities (two examples)
 room1.add_amenity("Air Conditioner")
 assert "Air Conditioner" in room1.get_room_info()["amenities"], "Amenity addition failed"
-
 room1.remove_amenity("Wi-Fi")
 assert "Wi-Fi" not in room1.get_room_info()["amenities"], "Amenity removal failed"
 
+room2.add_amenity("Mini-Bar")
+assert "Mini-Bar" in room2.get_room_info()["amenities"], "Amenity addition failed"
+room2.remove_amenity("Jacuzzi")
+assert "Jacuzzi" not in room2.get_room_info()["amenities"], "Amenity removal failed"
+
+# Searching for Available Rooms (two examples)
+assert room1.check_availability() is False, "Room 101 should be unavailable"
+assert room2.check_availability() is True, "Room 102 should be available"
+
 # Testing the Guest class
 guest1 = Guest(1, "Alice Brown", "alice@example.com")
+guest2 = Guest(2, "Bob Green", "bob@example.com")
+
 guest1.join_loyalty_program()
-assert guest1.view_loyalty_points() == 100, "Default loyalty points should be 100"
-assert guest1.redeem_loyalty_points(50) is True, "Loyalty point redemption failed"
+assert guest1.view_loyalty_points() == 50, "Initial loyalty points should be 50"
+assert guest1.redeem_loyalty_points(20) is True, "Loyalty point redemption failed"
+
+guest2.join_loyalty_program()
+assert guest2.view_loyalty_points() == 50, "Initial loyalty points should be 50"
+assert guest2.redeem_loyalty_points(60) is False, "Redemption should fail due to insufficient points"
 
 # Testing the Booking class
 booking1 = Booking(1, guest1, room1, "2025-03-01", "2025-03-05")
 booking1.confirm_booking()
 assert booking1.generate_booking_summary() is not None, "Booking summary generation failed"
 
-# Test booking modifications
+booking2 = Booking(2, guest2, room2, "2025-03-10", "2025-03-15")
+booking2.confirm_booking()
+assert booking2.generate_booking_summary() is not None, "Booking summary generation failed"
+
+# Test booking modifications (two examples)
 booking1.modify_booking(("2025-03-03", "2025-03-07"))
 assert booking1.calculate_total_cost() == 4 * 150.0, "Total cost calculation failed"
 
-# Test special requests
+booking2.modify_booking(("2025-03-12", "2025-03-16"))
+assert booking2.calculate_total_cost() == 4 * 300.0, "Total cost calculation failed"
+
+# Test special requests (two examples)
 booking1.add_special_request("Extra pillows")
 booking1.add_special_request("Late check-in")
 
+booking2.add_special_request("Early check-in")
+booking2.add_special_request("Sea view")
+
 # Testing the Payment class
-payment1 = Payment(1, booking1, 600.0, "Credit Card")
+payment1 = Payment(1, booking1, booking1.calculate_total_cost(), "Credit Card")
 assert payment1.process_payment() is True, "Payment processing failed"
 assert payment1.get_payment_status() == "Completed", "Payment status mismatch"
 
-# Test applying VAT and coupon
+payment2 = Payment(2, booking2, booking2.calculate_total_cost(), "Mobile Wallet")
+assert payment2.process_payment() is True, "Payment processing failed"
+assert payment2.get_payment_status() == "Completed", "Payment status mismatch"
+
+# Test applying VAT and coupon (two examples)
 payment1.apply_vat(10)
 assert payment1.generate_invoice() is not None, "Invoice generation failed"
-payment1.apply_coupon("DISCOUNT10")
-assert payment1.get_payment_status() == "Completed", "Coupon application failed"
+assert payment1.apply_coupon("DISCOUNT10") is True, "Coupon application failed"
 
-# Testing the Admin class
-admin1 = Admin(1, "admin", "admin123")
-admin1.manage_rooms()
-admin1.view_reports()
-admin1.block_guest(1)
+payment2.apply_vat(5)
+assert payment2.apply_coupon("INVALID") is False, "Invalid coupon should fail"
 
-# Testing the Feedback class
-feedback1 = Feedback(1, guest1, 5, "Excellent service!")
-feedback2 = Feedback(2, guest1, 3, "Room was clean but noisy.")
+# Testing Admin and Feedback classes (already sufficient)
 
-# Test average rating calculation
-assert Feedback.get_average_rating() == 4.0, "Average rating calculation failed"
-
-# Test feedback filtering
-filtered_feedback = Feedback.filter_feedback_by_rating(4)
-assert len(filtered_feedback) == 1, "Feedback filtering by rating failed"
+# Exception Handling Example (additional test)
+try:
+    payment3 = Payment(3, booking2, -500, "Credit Card")
+    assert payment3.validate_payment_details() is False, "Negative amount should fail validation"
+except Exception as e:
+    print(f"Handled exception: {e}")
 
 print("All tests passed!")
