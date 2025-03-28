@@ -1,0 +1,88 @@
+# Test script for the hotel management system classes
+
+# Testing the User class
+user1 = User(1, "John Doe", "johndoe@example.com", "johndoe", "password123", "Guest")
+user2 = User(2, "Jane Smith", "janesmith@example.com", "janesmith", "mypassword", "Admin")
+
+# Test login
+assert user1.login("johndoe", "password123") is True, "Login should succeed with correct credentials"
+assert user1.login("johndoe", "wrongpassword") is False, "Login should fail with incorrect credentials"
+
+# Test profile update
+user1.update_profile({"name": "John Updated", "contact_info": "newemail@example.com"})
+assert user1.get_account_details()["name"] == "John Updated", "Profile update failed"
+
+# Test password reset
+assert user1.reset_password("newpassword") is True, "Password reset failed"
+
+# Test booking history retrieval
+assert len(user1.check_booking_history()) > 0, "Booking history should not be empty"
+
+# Testing the Room class
+room1 = Room(101, "Deluxe", ["Wi-Fi", "TV"], 150.0, True)
+room2 = Room(102, "Suite", ["Wi-Fi", "TV", "Jacuzzi"], 300.0, True)
+
+# Test room availability
+assert room1.check_availability() is True, "Room 101 should be available"
+room1.update_status(False)
+assert room1.check_availability() is False, "Room 101 should not be available after update"
+
+# Test room price and discount
+assert room1.get_price() == 150.0, "Price mismatch"
+assert room1.calculate_discounted_price(10) == 135.0, "Discounted price calculation failed"
+
+# Test amenities
+room1.add_amenity("Air Conditioner")
+assert "Air Conditioner" in room1.get_room_info()["amenities"], "Amenity addition failed"
+
+room1.remove_amenity("Wi-Fi")
+assert "Wi-Fi" not in room1.get_room_info()["amenities"], "Amenity removal failed"
+
+# Testing the Guest class
+guest1 = Guest(1, "Alice Brown", "alice@example.com")
+guest1.join_loyalty_program()
+assert guest1.view_loyalty_points() == 100, "Default loyalty points should be 100"
+assert guest1.redeem_loyalty_points(50) is True, "Loyalty point redemption failed"
+
+# Testing the Booking class
+booking1 = Booking(1, guest1, room1, "2025-03-01", "2025-03-05")
+booking1.confirm_booking()
+assert booking1.generate_booking_summary() is not None, "Booking summary generation failed"
+
+# Test booking modifications
+booking1.modify_booking(("2025-03-03", "2025-03-07"))
+assert booking1.calculate_total_cost() == 4 * 150.0, "Total cost calculation failed"
+
+# Test special requests
+booking1.add_special_request("Extra pillows")
+booking1.add_special_request("Late check-in")
+
+# Testing the Payment class
+payment1 = Payment(1, booking1, 600.0, "Credit Card")
+assert payment1.process_payment() is True, "Payment processing failed"
+assert payment1.get_payment_status() == "Completed", "Payment status mismatch"
+
+# Test applying VAT and coupon
+payment1.apply_vat(10)
+assert payment1.generate_invoice() is not None, "Invoice generation failed"
+payment1.apply_coupon("DISCOUNT10")
+assert payment1.get_payment_status() == "Completed", "Coupon application failed"
+
+# Testing the Admin class
+admin1 = Admin(1, "admin", "admin123")
+admin1.manage_rooms()
+admin1.view_reports()
+admin1.block_guest(1)
+
+# Testing the Feedback class
+feedback1 = Feedback(1, guest1, 5, "Excellent service!")
+feedback2 = Feedback(2, guest1, 3, "Room was clean but noisy.")
+
+# Test average rating calculation
+assert Feedback.get_average_rating() == 4.0, "Average rating calculation failed"
+
+# Test feedback filtering
+filtered_feedback = Feedback.filter_feedback_by_rating(4)
+assert len(filtered_feedback) == 1, "Feedback filtering by rating failed"
+
+print("All tests passed!")
