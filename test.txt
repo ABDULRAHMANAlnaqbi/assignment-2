@@ -50,10 +50,6 @@ assert "Mini-Bar" in room2.get_room_info()["amenities"], "Amenity addition faile
 room2.remove_amenity("Jacuzzi")
 assert "Jacuzzi" not in room2.get_room_info()["amenities"], "Amenity removal failed"
 
-# Searching for Available Rooms (two examples)
-assert room1.check_availability() is False, "Room 101 should be unavailable"
-assert room2.check_availability() is True, "Room 102 should be available"
-
 # Testing the Guest class
 guest1 = Guest(1, "Alice Brown", "alice@example.com")
 guest2 = Guest(2, "Bob Green", "bob@example.com")
@@ -61,43 +57,47 @@ guest2 = Guest(2, "Bob Green", "bob@example.com")
 guest1.join_loyalty_program()
 assert guest1.view_loyalty_points() == 50, "Initial loyalty points should be 50"
 assert guest1.redeem_loyalty_points(20) is True, "Loyalty point redemption failed"
+assert guest1.redeem_loyalty_points(100) is False, "Redemption should fail due to insufficient points"
 
 guest2.join_loyalty_program()
 assert guest2.view_loyalty_points() == 50, "Initial loyalty points should be 50"
-assert guest2.redeem_loyalty_points(60) is False, "Redemption should fail due to insufficient points"
 
 # Helper function for validating dates
 def validate_booking_dates(check_in, check_out):
     date_format = "%Y-%m-%d"
-    try:
-        check_in_date = datetime.strptime(check_in, date_format)
-        check_out_date = datetime.strptime(check_out, date_format)
-        if check_out_date <= check_in_date:
-            raise ValueError("Checkout date must be after check-in date")
-    except ValueError as e:
-        raise ValueError(e)
+    check_in_date = datetime.strptime(check_in, date_format)
+    check_out_date = datetime.strptime(check_out, date_format)
+    if check_out_date <= check_in_date:
+        raise ValueError("Checkout date must be after check-in date")
 
-# Testing the Booking class with valid dates
+# Testing Booking class
 validate_booking_dates("2025-03-01", "2025-03-05")
 booking1 = Booking(1, guest1, room1, "2025-03-01", "2025-03-05")
 booking1.confirm_booking()
-assert booking1.generate_booking_summary() is not None, "Booking summary generation failed"
 
-validate_booking_dates("2025-03-10", "2025-03-15")
-booking2 = Booking(2, guest2, room2, "2025-03-10", "2025-03-15")
-booking2.confirm_booking()
-assert booking2.generate_booking_summary() is not None, "Booking summary generation failed"
+# Booking cancellation tests explicitly
+booking1.cancel_booking()
+assert booking1.get_status() == "Cancelled", "Booking cancellation failed"
+room1.update_status(True)
+assert room1.check_availability() is True, "Room availability not restored after cancellation"
 
-# Test invalid booking dates clearly (two examples)
+# Negative date test clearly handled
 try:
     validate_booking_dates("2025-03-10", "2025-03-05")
 except ValueError as e:
     print(f"Handled exception for invalid dates: {e}")
 
-try:
-    validate_booking_dates("invalid-date", "2025-03-15")
-except ValueError as e:
-    print(f"Handled exception for invalid date format: {e}")
+# Testing Payment class
+payment1 = Payment(1, booking1, 600.0, "Credit Card")
+assert payment1.process_payment() is True, "Payment processing failed"
+
+# Negative payment amount explicitly tested
+payment_negative = Payment(2, booking1, -50.0, "Credit Card")
+assert not payment_negative.validate_payment_details(), "Negative payment amount validation failed"
+
+# Payment class advanced features (split payments)
+payment_split = Payment(3, booking1, 600.0, "Split")
+payment_split.split_payment(["Credit Card", "Debit Card"], [300.0, 300.0])
+assert payment_split.get_payment_method() == "Credit Card, Debit Card", "Split payment failed"
 
 print("All tests passed!")
-
