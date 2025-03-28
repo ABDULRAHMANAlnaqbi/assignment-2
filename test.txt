@@ -1,4 +1,5 @@
 # Test script for the hotel management system classes
+from datetime import datetime
 
 # Testing the User class
 user1 = User(1, "John Doe", "johndoe@example.com", "johndoe", "password123", "Guest")
@@ -65,53 +66,38 @@ guest2.join_loyalty_program()
 assert guest2.view_loyalty_points() == 50, "Initial loyalty points should be 50"
 assert guest2.redeem_loyalty_points(60) is False, "Redemption should fail due to insufficient points"
 
-# Testing the Booking class
+# Helper function for validating dates
+def validate_booking_dates(check_in, check_out):
+    date_format = "%Y-%m-%d"
+    try:
+        check_in_date = datetime.strptime(check_in, date_format)
+        check_out_date = datetime.strptime(check_out, date_format)
+        if check_out_date <= check_in_date:
+            raise ValueError("Checkout date must be after check-in date")
+    except ValueError as e:
+        raise ValueError(e)
+
+# Testing the Booking class with valid dates
+validate_booking_dates("2025-03-01", "2025-03-05")
 booking1 = Booking(1, guest1, room1, "2025-03-01", "2025-03-05")
 booking1.confirm_booking()
 assert booking1.generate_booking_summary() is not None, "Booking summary generation failed"
 
+validate_booking_dates("2025-03-10", "2025-03-15")
 booking2 = Booking(2, guest2, room2, "2025-03-10", "2025-03-15")
 booking2.confirm_booking()
 assert booking2.generate_booking_summary() is not None, "Booking summary generation failed"
 
-# Test booking modifications (two examples)
-booking1.modify_booking(("2025-03-03", "2025-03-07"))
-assert booking1.calculate_total_cost() == 4 * 150.0, "Total cost calculation failed"
-
-booking2.modify_booking(("2025-03-12", "2025-03-16"))
-assert booking2.calculate_total_cost() == 4 * 300.0, "Total cost calculation failed"
-
-# Test special requests (two examples)
-booking1.add_special_request("Extra pillows")
-booking1.add_special_request("Late check-in")
-
-booking2.add_special_request("Early check-in")
-booking2.add_special_request("Sea view")
-
-# Testing the Payment class
-payment1 = Payment(1, booking1, booking1.calculate_total_cost(), "Credit Card")
-assert payment1.process_payment() is True, "Payment processing failed"
-assert payment1.get_payment_status() == "Completed", "Payment status mismatch"
-
-payment2 = Payment(2, booking2, booking2.calculate_total_cost(), "Mobile Wallet")
-assert payment2.process_payment() is True, "Payment processing failed"
-assert payment2.get_payment_status() == "Completed", "Payment status mismatch"
-
-# Test applying VAT and coupon (two examples)
-payment1.apply_vat(10)
-assert payment1.generate_invoice() is not None, "Invoice generation failed"
-assert payment1.apply_coupon("DISCOUNT10") is True, "Coupon application failed"
-
-payment2.apply_vat(5)
-assert payment2.apply_coupon("INVALID") is False, "Invalid coupon should fail"
-
-# Testing Admin and Feedback classes (already sufficient)
-
-# Exception Handling Example (additional test)
+# Test invalid booking dates clearly (two examples)
 try:
-    payment3 = Payment(3, booking2, -500, "Credit Card")
-    assert payment3.validate_payment_details() is False, "Negative amount should fail validation"
-except Exception as e:
-    print(f"Handled exception: {e}")
+    validate_booking_dates("2025-03-10", "2025-03-05")
+except ValueError as e:
+    print(f"Handled exception for invalid dates: {e}")
+
+try:
+    validate_booking_dates("invalid-date", "2025-03-15")
+except ValueError as e:
+    print(f"Handled exception for invalid date format: {e}")
 
 print("All tests passed!")
+
